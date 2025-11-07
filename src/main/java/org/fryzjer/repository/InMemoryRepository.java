@@ -24,15 +24,15 @@ public class InMemoryRepository implements HairSalonRepository {
 
     @Override
     public Person addPerson(String firstName, String lastName, String phoneNumber, Role role) {
-        Person newPerson = new Person(nextPersonId++, firstName, lastName, phoneNumber, role);
-
+        long newId = nextPersonId++;
+        Person newPerson = new Person(newId, firstName, lastName, phoneNumber, role);
         people.add(newPerson);
         return newPerson;
     }
 
     @Override
     public void deletePersonById(long id) {
-        this.people.removeIf(person -> person.id() == id);
+        this.people.removeIf(person -> person.getId() == id);
     }
 
     @Override
@@ -43,32 +43,31 @@ public class InMemoryRepository implements HairSalonRepository {
 
     @Override
     public Optional<Person> findPersonByPhoneNumber(String phoneNumber){
-        return this.people.stream().filter(person -> person.phoneNumber().equals(phoneNumber)).findFirst();
-    }
+        return this.people.stream()
+                .filter(person -> person.getPhoneNumber().equals(phoneNumber)) // .getPhoneNumber()
+                .findFirst();    }
 
     @Override
     public Optional<Person> findPersonById(long id) {
-        return this.people.stream().filter(person -> person.id() == id).findFirst();
+        return this.people.stream()
+                .filter(person -> person.getId() == id) // .getId()
+                .findFirst();
     }
 
 
 
     // ------Reservation------
     @Override
-    public Reservation addReservation(String nameOfService,
-                                      String establishmentNumber,
-                                      LocalDate date,
-                                      LocalTime time,
-                                      String workerNumber,
-                                      String clientNumber){
-        Reservation newReservation = new Reservation(nextReservationId++, nameOfService,
-                establishmentNumber,
-                date,
-                time,
-                workerNumber,
-                clientNumber);
+    public Reservation addReservation(String nameOfService, long establishmentId,
+                                      LocalDate date, LocalTime time,
+                                      long workerId, long clientId){
+
+        long newId = nextReservationId++;
+        Reservation newReservation = new Reservation(newId, nameOfService, establishmentId,
+                date, time, workerId, clientId);
 
         reservations.add(newReservation);
+        System.out.println("Repo: Added new reservation with ID=" + newId + " and Status=" + newReservation.getStatus());
         return newReservation;
     }
 
@@ -80,25 +79,25 @@ public class InMemoryRepository implements HairSalonRepository {
     @Override
     public List<Reservation> findReservationByDate(LocalDate date){
         return this.reservations.stream()
-                .filter(reservation -> reservation.date().equals(date))
+                .filter(reservation -> reservation.getDate().equals(date))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Reservation> findReservationsByDateAndTime(LocalDate date, LocalTime time) {
         return this.reservations.stream()
-                .filter(r -> r.date().equals(date) && r.time().equals(time))
+                .filter(r -> r.getDate().equals(date) && r.getTime().equals(time))
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<Reservation> findReservationById(long id){
-        return this.reservations.stream().filter(reservation -> reservation.id() == id).findFirst();
+        return this.reservations.stream().filter(reservation -> reservation.getId() == id).findFirst();
     }
 
     @Override
     public void deleteReservationById(long id){
-        this.reservations.removeIf(reservation -> reservation.id() == id);
+        this.reservations.removeIf(reservation -> reservation.getId() == id);
     }
 
     // ------Services------
@@ -147,7 +146,7 @@ public class InMemoryRepository implements HairSalonRepository {
                 .findFirst();
 
         serviceToArchive.ifPresent(service -> {
-            service.setAvailable(false); // To jest 'soft delete'
+            service.setAvailable(false);
         });
     }
 
@@ -174,7 +173,7 @@ public class InMemoryRepository implements HairSalonRepository {
     @Override
     public Optional<Establishment> findEstablishmentById(long id) {
         return this.establishments.stream()
-                .filter(e -> e.getId() == id) // .getId() bo to klasa
+                .filter(e -> e.getId() == id) //
                 .findFirst();
     }
 

@@ -1,8 +1,13 @@
 package org.fryzjer.service;
 
+import org.fryzjer.model.ReservationStatus;
 import org.fryzjer.repository.HairSalonRepository;
 import org.fryzjer.exception.ReservationConflictException;
 import org.fryzjer.model.Establishment;
+import org.fryzjer.model.Person;
+import org.fryzjer.model.Service;
+import org.fryzjer.model.Role;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -14,9 +19,11 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public void createReservation(long clientId, long serviceId, long establishmentId,
+    public void createReservation(long clientId, long serviceId, long establishmentId, long workerId,
                                   LocalDate date, LocalTime time)
-                                  throws ReservationConflictException {
+            throws ReservationConflictException {
+
+
         var client = repository.findPersonById(clientId)
                 .orElseThrow(() -> new IllegalArgumentException("No such client!"));
 
@@ -31,8 +38,16 @@ public class ClientServiceImpl implements ClientService {
                 .orElseThrow(() -> new IllegalArgumentException("No such establishment!"));
 
         int availableSeats = establishment.getNumberOfSeats();
+
+        var worker = repository.findPersonById(workerId)
+                .orElseThrow(() -> new IllegalArgumentException("No such employee with ID: " + workerId));
+        // I czy jest pracownikiem
+        if (worker.getRole() != Role.EMPLOYEE) {
+            throw new IllegalArgumentException("Person with ID: " + workerId + " is not an Employee.");
+        }
+
         long competingReservations = repository.findReservationsByDateAndTime(date, time).stream()
-                .filter(r -> r.establishmentNumber().equals(String.valueOf(establishmentId))) // To jest słabe (string), ale trzymam się Twojego modelu
+                .filter(r -> r.getEstablishmentId() == establishmentId) // Porównujemy long == long
                 .count();
 
         if (competingReservations >= availableSeats) {
@@ -40,24 +55,26 @@ public class ClientServiceImpl implements ClientService {
         }
 
         System.out.println("Service: Preparing reservation...");
+
+        // --- POPRAWKA BŁĘDU NR 2 ---
         repository.addReservation(
                 service.getServiceName(),
-                String.valueOf(establishmentId),
+                establishmentId, // Przekazujemy czysty long
                 date,
                 time,
-                "Pracownik nr 1", // TODO
-                String.valueOf(clientId)
+                workerId,
+                clientId // Przekazujemy czysty long
         );
     }
 
 
     @Override
     public void cancelReservation(long reservationId) {
-        repository.findReservationById(reservationId)
+        // Ta metoda była już u Ciebie POPRAWNA. Zostaje.
+        var reservation = repository.findReservationById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("No such reservation!"));
 
-        // 2. Jeśli tak -> ZAWOŁAJ REPOZYTORIUM
-        System.out.println("Service: Canceling reservation...");
-        repository.deleteReservationById(reservationId);
+        reservation.setStatus(ReservationStatus.CANCELLED);
+        System.out.println("Service: Reservation status changed to CANCELLED for ID: " + reservationId);
     }
 }

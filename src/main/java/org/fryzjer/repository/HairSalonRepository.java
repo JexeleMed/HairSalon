@@ -25,11 +25,11 @@ public interface HairSalonRepository {
      */
     Reservation addReservation(
             String nameOfService,
-            String establishmentNumber,
+            long establishmentId,
             LocalDate date,
             LocalTime time,
-            String workerNumber,
-            String clientNumber
+            long workerId,
+            long clientId
     );
 
     List<Reservation> getAllReservations();
