@@ -15,7 +15,7 @@ public class InMemoryRepository implements HairSalonRepository {
     private final List<Service> services = new ArrayList<>();
     private final List<Establishment> establishments = new ArrayList<>();
 
-
+    private long nextEstablishmentId = 1;
     private long nextPersonId = 1;
     private long nextReservationId = 1;
     private long nextServiceId = 1;
@@ -85,6 +85,13 @@ public class InMemoryRepository implements HairSalonRepository {
     }
 
     @Override
+    public List<Reservation> findReservationsByDateAndTime(LocalDate date, LocalTime time) {
+        return this.reservations.stream()
+                .filter(r -> r.date().equals(date) && r.time().equals(time))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Optional<Reservation> findReservationById(long id){
         return this.reservations.stream().filter(reservation -> reservation.id() == id).findFirst();
     }
@@ -146,7 +153,7 @@ public class InMemoryRepository implements HairSalonRepository {
 
     @Override
     public Establishment addEstablishment(String name, Integer numberOfSeats, String phoneNumber){
-        Establishment establishment = new Establishment(name, numberOfSeats, phoneNumber);
+        Establishment establishment = new Establishment(nextEstablishmentId, name, numberOfSeats, phoneNumber);
         establishments.add(establishment);
         return establishment;
     }
@@ -163,5 +170,12 @@ public class InMemoryRepository implements HairSalonRepository {
         return this.establishments;
     }
 
+
+    @Override
+    public Optional<Establishment> findEstablishmentById(long id) {
+        return this.establishments.stream()
+                .filter(e -> e.getId() == id) // .getId() bo to klasa
+                .findFirst();
+    }
 
 }

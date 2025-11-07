@@ -4,9 +4,11 @@ public class Establishment {
     private final String name;
     private final Integer numberOfSeats;
     private final String ownerPhoneNumber;
+    private final long id;
 
 
-    public Establishment(String name, Integer numberOfSeats, String ownerPhoneNumber) {
+    public Establishment(long id, String name, Integer numberOfSeats, String ownerPhoneNumber) {
+        this.id = id;
         this.name = name;
         this.numberOfSeats = numberOfSeats;
         this.ownerPhoneNumber = ownerPhoneNumber;
@@ -23,6 +25,10 @@ public class Establishment {
     public Integer getNumberOfSeats() {
         return numberOfSeats;
     }
+    public long getId() {
+        return id;
+    }
+
 }
 
 

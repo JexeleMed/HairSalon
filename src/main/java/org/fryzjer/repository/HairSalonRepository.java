@@ -34,6 +34,7 @@ public interface HairSalonRepository {
 
     List<Reservation> getAllReservations();
     List<Reservation> findReservationByDate(LocalDate date);
+    List<Reservation> findReservationsByDateAndTime(LocalDate date, LocalTime time);
     Optional<Reservation> findReservationById(long id);
     void deleteReservationById(long id);
 
@@ -53,9 +54,10 @@ public interface HairSalonRepository {
 
 
     /**
-     * Add establishment
+     * Establishment methods
      */
     Establishment addEstablishment(String name, Integer numberOfSeats, String phoneNumber);
     Optional<Establishment> findEstablishmentByPhoneNumber(String phoneNumber);
     List<Establishment> getAllEstablishments();
+    Optional<Establishment> findEstablishmentById(long id);
 }
