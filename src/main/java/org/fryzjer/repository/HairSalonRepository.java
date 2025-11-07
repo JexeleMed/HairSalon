@@ -1,9 +1,6 @@
 package org.fryzjer.repository;
 
-import org.fryzjer.model.Person;
-import org.fryzjer.model.Reservation;
-import org.fryzjer.model.Role;
-import org.fryzjer.model.Service;
+import org.fryzjer.model.*;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -52,5 +49,13 @@ public interface HairSalonRepository {
     List<Service> getAllAvailableServices();
 
     void updateServicePrice(long id, int newPrice);
-    void archiveService(long id); // To miałeś dobrze
+    void archiveService(long id);
+
+
+    /**
+     * Add establishment
+     */
+    Establishment addEstablishment(String name, Integer numberOfSeats, String phoneNumber);
+    Optional<Establishment> findEstablishmentByPhoneNumber(String phoneNumber);
+    List<Establishment> getAllEstablishments();
 }

@@ -1,2 +1,3 @@
 module fryzjer {
+    requires fryzjer;
 }
