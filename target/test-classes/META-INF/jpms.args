@@ -1,0 +1,4 @@
+--patch-module
+fryzjer=_
+--add-reads
+fryzjer=ALL-UNNAMED
