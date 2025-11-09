@@ -32,6 +32,6 @@ public class CashierServiceImpl implements CashierService {
         if (reservation.getStatus() != ReservationStatus.COMPLETED) {
             throw new IllegalStateException("Cannot pay for a reservation that is not COMPLETED. Current status: " + reservation.getStatus());
         }
-        reservation.setStatus(ReservationStatus.PAID);
+        repository.updateReservationStatus(reservationId, ReservationStatus.PAID);
     }
 }

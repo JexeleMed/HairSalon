@@ -7,6 +7,7 @@ import org.fryzjer.model.Role;
 import org.fryzjer.model.Service;
 import org.fryzjer.repository.HairSalonRepository;
 import org.fryzjer.repository.InMemoryRepository;
+import org.fryzjer.repository.SQLiteRepository;
 import org.fryzjer.service.*;
 
 import java.time.LocalDate;
@@ -20,7 +21,8 @@ public class FullSystemSimulationApp {
         System.out.println("Timestamp: " + LocalDate.now() + " " + LocalTime.now());
 
         // --- 1. SETUP ---
-        HairSalonRepository repository = new InMemoryRepository();
+
+        HairSalonRepository repository = new SQLiteRepository();
 
         PriceListService priceListService = new PriceListServiceImpl(repository);
         OwnerService ownerService = new OwnerServiceImpl(repository, priceListService);

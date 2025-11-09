@@ -41,13 +41,12 @@ public class ClientServiceImpl implements ClientService {
 
         var worker = repository.findPersonById(workerId)
                 .orElseThrow(() -> new IllegalArgumentException("No such employee with ID: " + workerId));
-        // I czy jest pracownikiem
         if (worker.getRole() != Role.EMPLOYEE) {
             throw new IllegalArgumentException("Person with ID: " + workerId + " is not an Employee.");
         }
 
         long competingReservations = repository.findReservationsByDateAndTime(date, time).stream()
-                .filter(r -> r.getEstablishmentId() == establishmentId) // Porównujemy long == long
+                .filter(r -> r.getEstablishmentId() == establishmentId)
                 .count();
 
         if (competingReservations >= availableSeats) {
@@ -56,25 +55,23 @@ public class ClientServiceImpl implements ClientService {
 
         System.out.println("Service: Preparing reservation...");
 
-        // --- POPRAWKA BŁĘDU NR 2 ---
         repository.addReservation(
                 service.getServiceName(),
-                establishmentId, // Przekazujemy czysty long
+                establishmentId,
                 date,
                 time,
                 workerId,
-                clientId // Przekazujemy czysty long
+                clientId
         );
     }
 
 
     @Override
     public void cancelReservation(long reservationId) {
-        // Ta metoda była już u Ciebie POPRAWNA. Zostaje.
         var reservation = repository.findReservationById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("No such reservation!"));
 
-        reservation.setStatus(ReservationStatus.CANCELLED);
+        repository.updateReservationStatus(reservationId, ReservationStatus.CANCELLED);
         System.out.println("Service: Reservation status changed to CANCELLED for ID: " + reservationId);
     }
 }

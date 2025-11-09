@@ -100,6 +100,14 @@ public class InMemoryRepository implements HairSalonRepository {
         this.reservations.removeIf(reservation -> reservation.getId() == id);
     }
 
+
+    @Override
+    public void updateReservationStatus(long reservationId, ReservationStatus newStatus) {
+        findReservationById(reservationId).ifPresent(reservation -> {
+            reservation.setStatus(newStatus);
+        });
+    }
+
     // ------Services------
     @Override
     public Service addService(String serviceName, int price) {

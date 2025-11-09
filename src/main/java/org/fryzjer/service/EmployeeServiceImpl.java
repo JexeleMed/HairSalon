@@ -40,6 +40,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new IllegalStateException("Cannot complete a reservation that is not PENDING. Current status: " + reservation.getStatus());
         }
 
-        reservation.setStatus(ReservationStatus.COMPLETED);
+        repository.updateReservationStatus(reservationId, ReservationStatus.COMPLETED);
     }
 }

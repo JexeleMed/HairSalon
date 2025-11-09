@@ -37,6 +37,7 @@ public interface HairSalonRepository {
     List<Reservation> findReservationsByDateAndTime(LocalDate date, LocalTime time);
     Optional<Reservation> findReservationById(long id);
     void deleteReservationById(long id);
+    void updateReservationStatus(long reservationId, ReservationStatus newStatus);
 
     /**
      * Service methods (Create, Read, Update, Archive)

@@ -50,7 +50,6 @@ public class OwnerApp {
             ownerService.getPriceListService().addNewService("", 50);
             System.out.println("STATUS: SUCCESS! Service added."); // This should not happen
         } catch (IllegalArgumentException e) {
-            // This is also what we expect!
             System.out.println("STATUS: VALIDATION ERROR (EXPECTED): " + e.getMessage());
         }
 
