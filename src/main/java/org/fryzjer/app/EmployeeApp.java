@@ -1,87 +1,121 @@
 package org.fryzjer.app;
 
-import org.fryzjer.model.Person;
 import org.fryzjer.model.Reservation;
-import org.fryzjer.model.ReservationStatus;
-import org.fryzjer.model.Role;
 import org.fryzjer.repository.HairSalonRepository;
-import org.fryzjer.repository.InMemoryRepository;
+import org.fryzjer.repository.SQLiteRepository;
 import org.fryzjer.service.EmployeeService;
 import org.fryzjer.service.EmployeeServiceImpl;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
 
 public class EmployeeApp {
 
+    private static EmployeeService employeeService;
+    private static final Scanner scanner = new Scanner(System.in);
+    private static long loggedInEmployeeId = -1;
+
     public static void main(String[] args) {
-
         // --- 1. SETUP ---
-        HairSalonRepository repository = new InMemoryRepository();
-        EmployeeService employeeService = new EmployeeServiceImpl(repository);
+        HairSalonRepository repository = new SQLiteRepository();
+        employeeService = new EmployeeServiceImpl(repository);
 
-        System.out.println("EmployeeApp started. Employee service initialized.");
-        System.out.println("------------------------------------");
+        System.out.println("--- EmployeeApp Terminal [ONLINE] ---");
 
-
-        // --- 2. DATA PREPARATION ---
-        Person employee1 = repository.addPerson("Adam", "Kowalski", "111", Role.EMPLOYEE); // Gets ID=1
-        Person employee2 = repository.addPerson("Ewa", "Nowak", "222", Role.EMPLOYEE); // Gets ID=2
-        Person client = repository.addPerson("Test Client", "C", "333", Role.CLIENT); // Gets ID=3
-
-        repository.addService("Haircut", 100); // ID=1
-        repository.addEstablishment("Main Shop", 3, "999"); // ID=1
-
-        // Create a reservation ASSIGNED TO EMPLOYEE 1
-        Reservation res1 = repository.addReservation(
-                "Haircut", 1L, LocalDate.now(), LocalTime.of(14, 0),
-                employee1.getId(), // Assigned to worker 1
-                client.getId()
-        ); // This is Reservation ID=1, Status=PENDING
-
-        System.out.println("Test data loaded: 2 employees, 1 client.");
-        System.out.println("Reservation ID=1 (PENDING) created and assigned to Employee ID=" + employee1.getId());
-
-
-        // --- 3. TEST "HAPPY PATH" (Employee 1 completes their own reservation) ---
-        System.out.println("\n[TEST 1] Employee ID=" + employee1.getId() + " attempts to complete their *own* reservation (ID=1)...");
+        // --- 2. LOG IN ---
         try {
-            employeeService.completeReservation(res1.getId(), employee1.getId());
-            System.out.println("STATUS: SUCCESS! Reservation marked as COMPLETED.");
-        } catch (Exception e) {
-            System.out.println("STATUS: ERROR (UNEXPECTED): " + e.getMessage());
+            System.out.print("Please enter your Employee ID to log in: ");
+            loggedInEmployeeId = scanner.nextLong();
+            scanner.nextLine();
+            System.out.println("Logged in as Employee ID: " + loggedInEmployeeId);
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid ID. Exiting.");
+            return;
         }
 
-        // --- 4. TEST "BAD PATH" (Trying to complete a non-PENDING reservation) ---
-        System.out.println("\n[TEST 2] Employee ID=" + employee1.getId() + " attempts to complete reservation ID=1 *again*...");
-        try {
-            employeeService.completeReservation(res1.getId(), employee1.getId());
-            System.out.println("STATUS: SUCCESS! (This should not happen)");
-        } catch (IllegalStateException e) {
-            System.out.println("STATUS: ERROR (EXPECTED): " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("STATUS: ERROR (UNEXPECTED): " + e.getMessage());
+        // --- 3. MAIN LOOP ---
+        runEmployeeMenu();
+
+        scanner.close();
+        System.out.println("--- EmployeeApp Terminal [OFFLINE] ---");
+    }
+
+    private static void runEmployeeMenu() {
+        boolean running = true;
+        while (running) {
+            System.out.println("\n[EMPLOYEE MENU | User: " + loggedInEmployeeId + "]");
+            System.out.println("1. View my pending reservations");
+            System.out.println("2. Complete a reservation");
+            System.out.println("9. Logout (Exit)");
+            System.out.print("Your choice: ");
+
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        handleViewMyReservations();
+                        break;
+                    case 2:
+                        handleCompleteReservation();
+                        break;
+                    case 9:
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+            }
+        }
+    }
+
+    private static void handleViewMyReservations() {
+        System.out.println("\n--- My Pending Reservations (Employee ID: " + loggedInEmployeeId + ") ---");
+
+        List<Reservation> reservations = employeeService.getMyPendingReservations(loggedInEmployeeId);
+
+        if (reservations.isEmpty()) {
+            System.out.println("No pending reservations found for you.");
+            return;
         }
 
-        // --- 5. TEST "SECURITY" (Employee 2 tries to complete Employee 1's reservation) ---
-        Reservation res2 = repository.addReservation(
-                "Haircut", 1L, LocalDate.now(), LocalTime.of(15, 0),
-                employee1.getId(), // Assigned to worker 1
-                client.getId()
-        ); // This is Reservation ID=2, Status=PENDING
-        System.out.println("\nTest data: Reservation ID=2 (PENDING) created for Employee ID=" + employee1.getId());
-
-        System.out.println("\n[TEST 3] Employee ID=" + employee2.getId() + " attempts to complete reservation ID=2 (which belongs to Employee 1)...");
-        try {
-            employeeService.completeReservation(res2.getId(), employee2.getId());
-            System.out.println("STATUS: SUCCESS! (This should not happen)");
-        } catch (SecurityException e) {
-            System.out.println("STATUS: SECURITY ERROR (EXPECTED): " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("STATUS: ERROR (UNEXPECTED): " + e.getMessage());
+        System.out.printf("%-5s | %-10s | %-12s | %-10s | %-8s%n",
+                "ID", "Date", "Time", "Service", "Client ID");
+        System.out.println("-------------------------------------------------------------");
+        for (Reservation res : reservations) {
+            System.out.printf("%-5d | %-10s | %-12s | %-10s | %-8d%n",
+                    res.getId(),
+                    res.getDate(),
+                    res.getTime(),
+                    res.getNameOfService(),
+                    res.getClientId()
+            );
         }
+    }
 
-        System.out.println("\n------------------------------------");
-        System.out.println("Simulation finished.");
+    private static void handleCompleteReservation() {
+        try {
+            System.out.println("\n--- Complete Reservation ---");
+            System.out.print("Enter Reservation ID to complete: ");
+            long reservationId = scanner.nextLong();
+            scanner.nextLine();
+
+            employeeService.completeReservation(reservationId, loggedInEmployeeId);
+
+            System.out.println("SUCCESS: Reservation ID=" + reservationId + " marked as COMPLETED.");
+
+        } catch (SecurityException | IllegalStateException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR: ID must be a number.");
+            scanner.nextLine();
+        }
     }
 }

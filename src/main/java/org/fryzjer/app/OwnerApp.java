@@ -2,82 +2,172 @@ package org.fryzjer.app;
 
 import org.fryzjer.model.Reservation;
 import org.fryzjer.repository.HairSalonRepository;
-import org.fryzjer.repository.InMemoryRepository;
+import org.fryzjer.repository.SQLiteRepository;
 import org.fryzjer.service.OwnerService;
 import org.fryzjer.service.OwnerServiceImpl;
 import org.fryzjer.service.PriceListService;
 import org.fryzjer.service.PriceListServiceImpl;
 
+import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Scanner;
 
 public class OwnerApp {
 
-    public static void main(String[] args) {
+    private static OwnerService ownerService;
+    private static final Scanner scanner = new Scanner(System.in);
 
-        // --- 1. SETUP (Creating and wiring layers) ---
-        HairSalonRepository repository = new InMemoryRepository();
+    public static void main(String[] args) {
+        // --- 1. SETUP ---
+        HairSalonRepository repository = new SQLiteRepository();
 
         PriceListService priceListService = new PriceListServiceImpl(repository);
+        ownerService = new OwnerServiceImpl(repository, priceListService);
 
-        OwnerService ownerService = new OwnerServiceImpl(repository, priceListService);
+        System.out.println("--- OwnerApp Terminal [ONLINE] ---");
+        System.out.println("Welcome, Owner. Please choose an option.");
 
-        System.out.println("OwnerApp started. Owner service initialized.");
-        System.out.println("------------------------------------");
+        // --- 2. MAIN LOOP ---
+        runOwnerMenu();
 
+        scanner.close();
+        System.out.println("--- OwnerApp Terminal [OFFLINE] ---");
+    }
 
-        // --- 2. "HAPPY PATH" TEST (Adding a valid service) ---
-        System.out.println("[TEST 1] Attempting to add a valid service ('Men's Haircut', 100)...");
-        try {
-            ownerService.getPriceListService().addNewService("Men's Haircut", 100);
-            System.out.println("STATUS: SUCCESS! Service added.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("STATUS: VALIDATION ERROR (UNEXPECTED): " + e.getMessage());
+    private static void runOwnerMenu() {
+        boolean running = true;
+        while (running) {
+            System.out.println("\n[OWNER MENU]");
+            System.out.println("1. Add new service to price list");
+            System.out.println("2. Update service price");
+            System.out.println("3. Archive a service");
+            System.out.println("4. View all reservations");
+            System.out.println("5. View total revenue");
+            System.out.println("9. Exit application");
+            System.out.print("Your choice: ");
+
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine();
+
+                switch (choice) {
+                    case 1:
+                        handleAddService();
+                        break;
+                    case 2:
+                        handleUpdatePrice();
+                        break;
+                    case 3:
+                        handleArchiveService();
+                        break;
+                    case 4:
+                        handleViewAllReservations();
+                        break;
+                    case 5:
+                        handleViewTotalRevenue();
+                        break;
+                    case 9:
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+            }
         }
+    }
 
-        // --- 3. VALIDATION TEST (Adding a service with negative price) ---
-        System.out.println("\n[TEST 2] Attempting to add an invalid service ('Beard Trim', -50)...");
+    // --- MENU METHODS ---
+
+    private static void handleAddService() {
         try {
-            ownerService.getPriceListService().addNewService("Beard Trim", -50);
-            System.out.println("STATUS: SUCCESS! Service added."); // This should not happen
-        } catch (IllegalArgumentException e) {
-            // This is what we expect!
-            System.out.println("STATUS: VALIDATION ERROR (EXPECTED): " + e.getMessage());
-        }
+            System.out.println("\n--- Add New Service ---");
+            System.out.print("Enter service name: ");
+            String name = scanner.nextLine();
 
-        // --- 4. VALIDATION TEST (Adding a service with blank name) ---
-        System.out.println("\n[TEST 3] Attempting to add an invalid service ('', 50)...");
+            System.out.print("Enter price: ");
+            int price = scanner.nextInt();
+            scanner.nextLine();
+
+            ownerService.getPriceListService().addNewService(name, price);
+            System.out.println("SUCCESS: Service '" + name + "' added.");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR (Validation): " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR (Input): Price must be a number.");
+            scanner.nextLine();
+        }
+    }
+
+    private static void handleUpdatePrice() {
         try {
-            ownerService.getPriceListService().addNewService("", 50);
-            System.out.println("STATUS: SUCCESS! Service added."); // This should not happen
-        } catch (IllegalArgumentException e) {
-            System.out.println("STATUS: VALIDATION ERROR (EXPECTED): " + e.getMessage());
-        }
+            System.out.println("\n--- Update Service Price ---");
+            System.out.print("Enter Service ID to update: ");
+            long id = scanner.nextLong();
 
-        // --- 5. UPDATE TEST ---
-        System.out.println("\n[TEST 4] Attempting to update price for service ID=1...");
+            System.out.print("Enter NEW price: ");
+            int newPrice = scanner.nextInt();
+            scanner.nextLine();
+
+            ownerService.getPriceListService().updateServicePrice(id, newPrice);
+            System.out.println("SUCCESS: Price updated for service ID=" + id);
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR (Validation): " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR (Input): ID and price must be numbers.");
+            scanner.nextLine();
+        }
+    }
+
+    private static void handleArchiveService() {
         try {
-            ownerService.getPriceListService().updateServicePrice(1L, 120); // 1L is the ID of "Men's Haircut"
-            System.out.println("STATUS: SUCCESS! Price updated.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("STATUS: VALIDATION ERROR (UNEXPECTED): " + e.getMessage());
-        }
+            System.out.println("\n--- Archive Service ---");
+            System.out.print("Enter Service ID to archive: ");
+            long id = scanner.nextLong();
+            scanner.nextLine();
 
-        // --- 6. LISTING TEST ---
-        System.out.println("\n[TEST 5] Listing available services...");
-        var services = ownerService.getPriceListService().getAvailablePriceList();
-        services.forEach(service -> {
-            System.out.println("  - " + service.getServiceName() + ", Price: " + service.getPrice());
-        });
-        // --- 7. RESERVATION BROWSING ---
-        System.out.println("\n[TEST 6] Listing all reservations...");
+            ownerService.getPriceListService().archiveService(id);
+            System.out.println("SUCCESS: Service ID=" + id + " archived.");
+
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR: ID must be a number.");
+            scanner.nextLine();
+        }
+    }
+
+    private static void handleViewAllReservations() {
+        System.out.println("\n--- All Reservations (All Time) ---");
         List<Reservation> reservations = ownerService.viewAllReservations();
+
         if (reservations.isEmpty()) {
-            System.out.println("STATUS: SUCCESS! No reservations found (as expected).");
-        } else {
-            System.out.println("Found reservations: " + reservations.size());
+            System.out.println("No reservations found in the system.");
+            return;
         }
 
-        System.out.println("\n------------------------------------");
-        System.out.println("Simulation finished.");
+        System.out.printf("%-5s | %-10s | %-12s | %-10s | %-8s | %-8s%n",
+                "ID", "Date", "Time", "Status", "Client", "Worker");
+        System.out.println("------------------------------------------------------------------");
+        for (Reservation res : reservations) {
+            System.out.printf("%-5d | %-10s | %-12s | %-10s | %-8d | %-8d%n",
+                    res.getId(),
+                    res.getDate(),
+                    res.getTime(),
+                    res.getStatus(),
+                    res.getClientId(),
+                    res.getWorkerId()
+            );
+        }
+    }
+
+    private static void handleViewTotalRevenue() {
+        System.out.println("\n--- Total Revenue ---");
+        double revenue = ownerService.calculateTotalRevenue();
+        System.out.printf("Total revenue from all PAID reservations: %.2f PLN%n", revenue);
     }
 }

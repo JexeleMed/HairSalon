@@ -402,6 +402,34 @@ public class SQLiteRepository implements HairSalonRepository {
         }
     }
 
+    @Override
+    public List<Reservation> getAllPaidReservations() {
+        String sql = "SELECT * FROM reservations WHERE status = 'PAID'";
+        List<Reservation> list = new java.util.ArrayList<>();
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             var rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Reservation reservation = new Reservation(
+                        rs.getLong("id"),
+                        rs.getString("service_name"),
+                        rs.getLong("establishment_id"),
+                        LocalDate.parse(rs.getString("date")),
+                        LocalTime.parse(rs.getString("time")),
+                        rs.getLong("worker_id"),
+                        rs.getLong("client_id")
+                );
+                reservation.setStatus(ReservationStatus.valueOf(rs.getString("status")));
+                list.add(reservation);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting all paid reservations: " + e.getMessage(), e);
+        }
+        return list;
+    }
+
     /**
      * Service methods (Create, Read, Update, Archive)
      */

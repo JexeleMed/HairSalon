@@ -1,77 +1,110 @@
 package org.fryzjer.app;
 
 import org.fryzjer.model.Reservation;
-import org.fryzjer.model.ReservationStatus;
-import org.fryzjer.model.Role;
 import org.fryzjer.repository.HairSalonRepository;
-import org.fryzjer.repository.InMemoryRepository;
+import org.fryzjer.repository.SQLiteRepository;
 import org.fryzjer.service.CashierService;
 import org.fryzjer.service.CashierServiceImpl;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.Optional;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Scanner;
 
 public class CashierApp {
 
+    private static CashierService cashierService;
+    private static final Scanner scanner = new Scanner(System.in);
+
     public static void main(String[] args) {
+        // --- 1. SETUP ---
+        HairSalonRepository repository = new SQLiteRepository();
+        cashierService = new CashierServiceImpl(repository);
 
-        // --- 1. SETUP (Creating and wiring layers) ---
-        HairSalonRepository repository = new InMemoryRepository();
-        CashierService cashierService = new CashierServiceImpl(repository);
+        System.out.println("--- CashierApp Terminal [ONLINE] ---");
+        System.out.println("Welcome, Cashier. Please choose an option.");
 
-        System.out.println("CashierApp started. Cashier service initialized.");
-        System.out.println("------------------------------------");
+        // --- 2. MAIN LOOP ---
+        runCashierMenu();
 
+        scanner.close();
+        System.out.println("--- CashierApp Terminal [OFFLINE] ---");
+    }
 
-        // --- 2. DATA PREPARATION (The "Cheat") ---
-        System.out.println("Preparing test data...");
+    private static void runCashierMenu() {
+        boolean running = true;
+        while (running) {
+            System.out.println("\n[CASHIER MENU]");
+            System.out.println("1. View reservations to be processed (COMPLETED)");
+            System.out.println("2. Mark reservation as PAID");
+            System.out.println("9. Exit application");
+            System.out.print("Your choice: ");
 
-        // Add prerequisites
-        repository.addPerson("Test Client", "Client", "111", Role.CLIENT); // ID=1
-        repository.addService("Test Service", 100); // ID=1
-        repository.addEstablishment("Test Shop", 2, "222"); // ID=1
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine();
 
-        // Create the reservation (it will be 'PENDING' by default)
-        Reservation res = repository.addReservation(
-                "Test Service", 1L, LocalDate.now(), LocalTime.of(12, 0), 1L, 1L); // ID=1
+                switch (choice) {
+                    case 1:
+                        handleViewReservationsToProcess();
+                        break;
+                    case 2:
+                        handleMarkAsPaid();
+                        break;
+                    case 9:
+                        running = false;
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please try again.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                scanner.nextLine();
+            }
+        }
+    }
 
-        res.setStatus(ReservationStatus.COMPLETED);
+    private static void handleViewReservationsToProcess() {
+        System.out.println("\n--- Reservations to Process (COMPLETED or PAID) ---");
 
-        System.out.println("Test data loaded: 1 reservation (ID=1) created and set to COMPLETED.");
+        List<Reservation> reservations = cashierService.getReservationsToProcess();
 
-
-        // --- 3. TEST "HAPPY PATH" (Marking the 'COMPLETED' reservation as 'PAID') ---
-        System.out.println("\n[TEST 1] Cashier attempts to mark reservation ID=1 as PAID...");
-        try {
-            cashierService.markReservationAsPaid(1L);
-            System.out.println("STATUS: SUCCESS! Reservation marked as PAID.");
-        } catch (Exception e) {
-            System.out.println("STATUS: ERROR (UNEXPECTED): " + e.getMessage());
+        if (reservations.isEmpty()) {
+            System.out.println("No reservations found to process.");
+            return;
         }
 
-        // --- 4. VERIFICATION ---
-        Optional<Reservation> verifiedRes = repository.findReservationById(1L);
-        if (verifiedRes.isPresent() && verifiedRes.get().getStatus() == ReservationStatus.PAID) {
-            System.out.println("VERIFICATION: SUCCESS! Reservation ID=1 is now PAID in the database.");
-        } else {
-            System.out.println("VERIFICATION: FAILED! Reservation is not PAID.");
+        System.out.printf("%-5s | %-10s | %-12s | %-10s | %-8s%n",
+                "ID", "Date", "Time", "Status", "Client ID");
+        System.out.println("-------------------------------------------------------------");
+        for (Reservation res : reservations) {
+            System.out.printf("%-5d | %-10s | %-12s | %-10s | %-8d%n",
+                    res.getId(),
+                    res.getDate(),
+                    res.getTime(),
+                    res.getStatus(),
+                    res.getClientId()
+            );
         }
+    }
 
-
-        // --- 5. TEST "BAD PATH" (Trying to pay for it again) ---
-        System.out.println("\n[TEST 2] Cashier attempts to mark reservation ID=1 as PAID *again*...");
+    private static void handleMarkAsPaid() {
         try {
-            cashierService.markReservationAsPaid(1L);
-            System.out.println("STATUS: SUCCESS! (This should not happen)");
+            System.out.println("\n--- Mark as PAID ---");
+            System.out.print("Enter Reservation ID to mark as PAID: ");
+            long reservationId = scanner.nextLong();
+            scanner.nextLine();
+
+            cashierService.markReservationAsPaid(reservationId);
+
+            System.out.println("SUCCESS: Reservation ID=" + reservationId + " marked as PAID.");
+
         } catch (IllegalStateException e) {
-            // This is expected! Our logic in CashierServiceImpl should throw this.
-            System.out.println("STATUS: ERROR (EXPECTED): " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("STATUS: ERROR (UNEXPECTED): " + e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println("ERROR: " + e.getMessage());
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR: ID must be a number.");
+            scanner.nextLine();
         }
-
-        System.out.println("\n------------------------------------");
-        System.out.println("Simulation finished.");
     }
 }

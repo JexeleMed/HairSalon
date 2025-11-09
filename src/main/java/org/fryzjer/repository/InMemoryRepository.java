@@ -107,6 +107,12 @@ public class InMemoryRepository implements HairSalonRepository {
             reservation.setStatus(newStatus);
         });
     }
+    @Override
+    public List<Reservation> getAllPaidReservations() {
+        return this.reservations.stream()
+                .filter(reservation -> reservation.getStatus() == ReservationStatus.PAID)
+                .collect(Collectors.toList());
+    }
 
     // ------Services------
     @Override

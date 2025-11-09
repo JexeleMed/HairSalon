@@ -38,6 +38,7 @@ public interface HairSalonRepository {
     Optional<Reservation> findReservationById(long id);
     void deleteReservationById(long id);
     void updateReservationStatus(long reservationId, ReservationStatus newStatus);
+    List<Reservation> getAllPaidReservations();
 
     /**
      * Service methods (Create, Read, Update, Archive)
