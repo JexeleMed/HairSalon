@@ -8,6 +8,7 @@ import org.fryzjer.service.OwnerServiceImpl;
 import org.fryzjer.service.PriceListService;
 import org.fryzjer.service.PriceListServiceImpl;
 
+import java.time.LocalDate;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
@@ -43,6 +44,7 @@ public class OwnerApp {
             System.out.println("3. Archive a service");
             System.out.println("4. View all reservations");
             System.out.println("5. View total revenue");
+            System.out.println("6. Cleanup old/missed reservations");
             System.out.println("9. Exit application");
             System.out.print("Your choice: ");
 
@@ -66,6 +68,11 @@ public class OwnerApp {
                     case 5:
                         handleViewTotalRevenue();
                         break;
+                    case 6:
+                        handleCleanupOldReservations();
+                        break;
+
+
                     case 9:
                         running = false;
                         break;
@@ -169,5 +176,17 @@ public class OwnerApp {
         System.out.println("\n--- Total Revenue ---");
         double revenue = ownerService.calculateTotalRevenue();
         System.out.printf("Total revenue from all PAID reservations: %.2f PLN%n", revenue);
+    }
+    private static void handleCleanupOldReservations() {
+        System.out.println("\n--- Cleaning up Missed Reservations ---");
+        System.out.println("Checking for all PENDING reservations before today (" + LocalDate.now() + ")...");
+
+        int cleanedCount = ownerService.cleanupMissedReservations();
+
+        if (cleanedCount > 0) {
+            System.out.println("SUCCESS: Found and marked " + cleanedCount + " reservations as MISSED.");
+        } else {
+            System.out.println("SUCCESS: No missed reservations found to clean up.");
+        }
     }
 }

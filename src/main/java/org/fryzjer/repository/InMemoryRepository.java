@@ -114,6 +114,13 @@ public class InMemoryRepository implements HairSalonRepository {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<Reservation> findPendingReservationsBefore(LocalDate date) {
+        return this.reservations.stream()
+                .filter(r -> r.getStatus() == ReservationStatus.PENDING && r.getDate().isBefore(date))
+                .collect(Collectors.toList());
+    }
+
     // ------Services------
     @Override
     public Service addService(String serviceName, int price) {

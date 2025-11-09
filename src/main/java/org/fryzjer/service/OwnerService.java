@@ -8,4 +8,5 @@ public interface OwnerService {
     List<Reservation> viewAllReservations();
     PriceListService getPriceListService();
     double calculateTotalRevenue();
+    int cleanupMissedReservations();
 }

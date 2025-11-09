@@ -4,5 +4,6 @@ public enum Role {
     OWNER,
     CASHIER,
     EMPLOYEE,
-    CLIENT
+    CLIENT,
+    MISSED
 }

@@ -1,15 +1,12 @@
 package org.fryzjer.service;
 
-import org.fryzjer.model.ReservationStatus;
+import org.fryzjer.model.*;
 import org.fryzjer.repository.HairSalonRepository;
 import org.fryzjer.exception.ReservationConflictException;
-import org.fryzjer.model.Establishment;
-import org.fryzjer.model.Person;
-import org.fryzjer.model.Service;
-import org.fryzjer.model.Role;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 public class ClientServiceImpl implements ClientService {
     private final HairSalonRepository repository;
@@ -67,11 +64,23 @@ public class ClientServiceImpl implements ClientService {
 
 
     @Override
-    public void cancelReservation(long reservationId) {
+    public void cancelReservation(long reservationId, long loggedInClientId) {
+
         var reservation = repository.findReservationById(reservationId)
                 .orElseThrow(() -> new IllegalArgumentException("No such reservation!"));
 
+        if (reservation.getClientId() != loggedInClientId) {
+            throw new SecurityException("Client ID=" + loggedInClientId + " cannot cancel a reservation belonging to Client ID=" + reservation.getClientId());
+        }
+
         repository.updateReservationStatus(reservationId, ReservationStatus.CANCELLED);
         System.out.println("Service: Reservation status changed to CANCELLED for ID: " + reservationId);
+    }
+
+    @Override
+    public List<Reservation> viewAllAnonymizedReservations() {
+        System.out.println("Service: Client requests anonymized reservation list...");
+
+        return repository.getAllReservations();
     }
 }
