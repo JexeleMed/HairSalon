@@ -69,4 +69,24 @@ public class OwnerServiceImpl implements OwnerService {
         System.out.println("Service: Cleaned up " + missedReservations.size() + " reservations.");
         return missedReservations.size();
     }
+
+
+    @Override
+    public int debug_AdvanceTimeByDays(int daysToAdvance) {
+        System.out.println("Service: Owner requests DEBUG time advance by " + daysToAdvance + " days...");
+
+        List<Reservation> allReservations = repository.getAllReservations();
+
+        int count = 0;
+        for (Reservation res : allReservations) {
+            LocalDate oldDate = res.getDate();
+            LocalDate newDate = oldDate.minusDays(daysToAdvance);
+
+            repository.debug_UpdateReservationDate(res.getId(), newDate);
+            count++;
+        }
+
+        System.out.println("Service: Advanced time for " + count + " reservations.");
+        return count;
+    }
 }

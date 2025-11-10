@@ -45,6 +45,7 @@ public class OwnerApp {
             System.out.println("4. View all reservations");
             System.out.println("5. View total revenue");
             System.out.println("6. Cleanup old/missed reservations");
+            System.out.println("7. [DEBUG] Advance time (e.g., 30 days)");
             System.out.println("9. Exit application");
             System.out.print("Your choice: ");
 
@@ -71,8 +72,9 @@ public class OwnerApp {
                     case 6:
                         handleCleanupOldReservations();
                         break;
-
-
+                    case 7:
+                        handleAdvanceTime();
+                        break;
                     case 9:
                         running = false;
                         break;
@@ -187,6 +189,28 @@ public class OwnerApp {
             System.out.println("SUCCESS: Found and marked " + cleanedCount + " reservations as MISSED.");
         } else {
             System.out.println("SUCCESS: No missed reservations found to clean up.");
+        }
+    }
+    private static void handleAdvanceTime() {
+        try {
+            System.out.println("\n--- [DEBUG] Advance Time ---");
+            System.out.print("Enter number of days to advance time by (e.g., 30): ");
+            int days = scanner.nextInt();
+            scanner.nextLine();
+
+            if (days <= 0) {
+                System.out.println("Days must be a positive number.");
+                return;
+            }
+
+            int updatedCount = ownerService.debug_AdvanceTimeByDays(days);
+
+            System.out.println("SUCCESS: Advanced time for " + updatedCount + " reservations by " + days + " days.");
+            System.out.println("You can now run 'Cleanup old/missed reservations' (option 6) to see the effect.");
+
+        } catch (InputMismatchException e) {
+            System.out.println("ERROR: Please enter a valid number.");
+            scanner.nextLine();
         }
     }
 }

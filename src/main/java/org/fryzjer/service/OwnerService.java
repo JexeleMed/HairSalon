@@ -9,4 +9,5 @@ public interface OwnerService {
     PriceListService getPriceListService();
     double calculateTotalRevenue();
     int cleanupMissedReservations();
+    int debug_AdvanceTimeByDays(int daysToAdvance);
 }

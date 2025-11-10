@@ -63,4 +63,10 @@ public interface HairSalonRepository {
     Optional<Establishment> findEstablishmentByPhoneNumber(String phoneNumber);
     List<Establishment> getAllEstablishments();
     Optional<Establishment> findEstablishmentById(long id);
+
+    /**
+     * Simulate time
+     */
+
+    void debug_UpdateReservationDate(long reservationId, LocalDate newDate);
 }

@@ -198,4 +198,12 @@ public class InMemoryRepository implements HairSalonRepository {
                 .findFirst();
     }
 
+    /**
+     * Time simulation
+     */
+    @Override
+    public void debug_UpdateReservationDate(long reservationId, LocalDate newDate) {
+        System.out.println("Debug: UpdateReservationDate called (In-Memory) - no action taken.");
+    }
+
 }

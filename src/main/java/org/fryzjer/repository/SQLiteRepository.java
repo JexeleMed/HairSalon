@@ -730,4 +730,23 @@ public class SQLiteRepository implements HairSalonRepository {
         }
         return Optional.empty();
     }
+
+    /**
+     * Time simulation
+     */
+    @Override
+    public void debug_UpdateReservationDate(long reservationId, LocalDate newDate) {
+        String sql = "UPDATE reservations SET date = ? WHERE id = ?";
+
+        try (Connection conn = connect();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, newDate.toString());
+            stmt.setLong(2, reservationId);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error (debug) updating reservation date: " + e.getMessage(), e);
+        }
+    }
 }

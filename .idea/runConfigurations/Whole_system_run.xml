@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Whole system run" type="CompoundRunConfigurationType">
+    <toRun name="CashierApp" type="Application" />
+    <toRun name="ClientApp" type="Application" />
+    <toRun name="ClientApp (1)" type="Application" />
+    <toRun name="EmployeeApp" type="Application" />
+    <toRun name="EmployeeApp (1)" type="Application" />
+    <toRun name="OwnerApp" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>
